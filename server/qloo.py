@@ -1,6 +1,9 @@
 from typing import Any
 import httpx
 import os
+from datetime import datetime
+from enum import Enum
+import json
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
@@ -14,6 +17,16 @@ mcp = FastMCP("qloo")
 QLOO_API_BASE = "https://hackathon.api.qloo.com/v2/insights/"
 USER_AGENT = "qloo-app/1.0"
 
+class SocialContext(Enum):
+    """Social contexts for cultural analysis"""
+    SOLO = "solo"
+    COUPLE = "couple"
+    FAMILY = "family"
+    FRIENDS = "friends"
+    BUSINESS = "business"
+    LARGE_GROUP = "large_group"
+    TOURISTS = "tourists"
+    LOCALS = "locals"
 
 async def make_qloo_request(url: str) -> dict[str, Any] | None:
     """Make a request to the QLOO API with proper error handling."""
@@ -33,7 +46,76 @@ async def make_qloo_request(url: str) -> dict[str, Any] | None:
             return response.json()
         except Exception as e:
             return {"error": f"API request failed: {str(e)}"}
+
+@mcp.tool()
+async def analyze_cultural_moment(self, location: str, 
+                                social_context: str = "friends", 
+                                include_details: bool = True) -> str:
+    """Analyze the cultural context and moment for a specific location and social situation.
+
+    Args:
+        location: City name (e.g. Mumbai, New York, Tokyo)
+        social_context: Social situation (solo, couple, family, friends, business, large_group, tourists, locals)
+        include_details: Whether to include detailed cultural breakdown
+
+    
+    Returns:
+        CulturalMoment: Comprehensive cultural analysis
+    """
+    if time is None:
+        time = datetime.now()
         
+    print(f"🔍 Analyzing cultural moment: {location} at {time.strftime('%Y-%m-%d %H:%M')} for {social_context.value}")
+        
+        # Generate cache key for this specific analysis
+    cache_key = f"{location}_{time.date()}_{social_context.value}"
+        
+    if self.cache_enabled and cache_key in self.cache:
+        print("📋 Using cached cultural analysis")
+        return self.cache[cache_key]
+        
+        # Fetch cultural heatmap data
+    heatmap = await self._fetch_cultural_heatmap(location)
+        
+        # Analyze local preferences
+    local_preferences = await self._analyze_local_preferences(location, social_context)
+        
+        # Get demographic insights
+    demographics = await self._fetch_demographics(location)
+        
+        # Generate cultural tags
+    cultural_tags = self._generate_cultural_tags(heatmap, local_preferences, demographics)
+        
+        # Calculate derived metrics
+    cultural_intensity = self._calculate_cultural_intensity(heatmap, local_preferences)
+    diversity_index = self._calculate_diversity_index(cultural_tags, demographics)
+    accessibility_score = self._calculate_accessibility_score(location, social_context)
+        
+        # Calculate confidence based on data quality
+    confidence_score = self._calculate_confidence_score(heatmap, local_preferences, demographics)
+        
+        # Create the cultural moment
+    moment = CulturalMoment(
+        location=location,
+        timestamp=time,
+        social_context=social_context,
+        heatmap=heatmap,
+        local_preferences=local_preferences,
+        demographics=demographics,
+        cultural_tags=cultural_tags,
+        cultural_intensity=cultural_intensity,
+        diversity_index=diversity_index,
+        accessibility_score=accessibility_score,
+        confidence_score=confidence_score,
+        data_sources=["qloo_api", "cultural_analysis", "demographic_inference"]
+    )
+        
+        # Cache the result
+    if self.cache_enabled:
+        self.cache[cache_key] = moment
+        
+    print(f"✅ Cultural analysis complete: {moment.get_cultural_summary()}")
+    return moment
 
 def format_place_recommendation(item: dict) -> str:
     """Format a place recommendation into a readable string."""
@@ -76,6 +158,10 @@ def format_place_recommendation(item: dict) -> str:
     result += f"\n   {status}"
     
     return result
+
+@mcp.tool()
+async def get_cultural_preferences(location: str, social_context: str = "friends") -> str:
+    """Get cultural preferences and local insights for a location and social context."""
 
 @mcp.tool()
 async def get_restaurant_recommendations(location: str, cuisine: str = "japanese") -> str:
