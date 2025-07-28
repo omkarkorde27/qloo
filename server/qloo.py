@@ -192,302 +192,65 @@ def _determine_entity_and_comprehensive_params(query_text: str) -> Tuple[str, Di
     params = {}
     
     # =============================================================================
-    # ENTITY TYPE DETECTION WITH COMPREHENSIVE PARAMETER EXTRACTION
+    # PERSON ENTITY (Fixed priority and parameter mapping)
     # =============================================================================
-    
-    # ARTIST ENTITY
-    if any(word in query_text for word in ["artist", "musician", "singer", "band", "composer", "painter", "sculptor", "performer"]):
-        entity_type = "urn:entity:artist"
-        params["filter.type"] = entity_type
-        
-        # =============================================================================
-        # COMPREHENSIVE ARTIST PARAMETERS
-        # =============================================================================
-        
-        # Trends bias
-        if "trending" in query_text or "hot" in query_text or "viral" in query_text:
-            params["bias.trends"] = "high"
-        elif "classic" in query_text or "timeless" in query_text:
-            params["bias.trends"] = "low"
-            
-        # Popularity filters
-        if "popular" in query_text or "famous" in query_text or "well-known" in query_text:
-            params["filter.popularity.min"] = "0.7"
-        elif "underground" in query_text or "indie" in query_text or "emerging" in query_text:
-            params["filter.popularity.max"] = "0.4"
-        elif "mainstream" in query_text:
-            params["filter.popularity.min"] = "0.6"
-            
-        # Artist genre tags
-        artist_tags = []
-        if "rock" in query_text:
-            artist_tags.append("urn:tag:genre:music:rock")
-        if "pop" in query_text:
-            artist_tags.append("urn:tag:genre:music:pop")
-        if "jazz" in query_text:
-            artist_tags.append("urn:tag:genre:music:jazz")
-        if "classical" in query_text:
-            artist_tags.append("urn:tag:genre:music:classical")
-        if "hip hop" in query_text or "rap" in query_text:
-            artist_tags.append("urn:tag:genre:music:hip_hop")
-        if "electronic" in query_text or "edm" in query_text:
-            artist_tags.append("urn:tag:genre:music:electronic")
-        if "country" in query_text:
-            artist_tags.append("urn:tag:genre:music:country")
-        if "folk" in query_text:
-            artist_tags.append("urn:tag:genre:music:folk")
-            
-        # Visual artist tags
-        if "painter" in query_text or "painting" in query_text:
-            artist_tags.append("urn:tag:medium:visual:painting")
-        if "sculptor" in query_text or "sculpture" in query_text:
-            artist_tags.append("urn:tag:medium:visual:sculpture")
-        if "photographer" in query_text or "photography" in query_text:
-            artist_tags.append("urn:tag:medium:visual:photography")
-            
-        if artist_tags:
-            params["filter.tags"] = ",".join(artist_tags)
-            
-        # External platform filters
-        if "spotify" in query_text:
-            params["filter.external.exists"] = "spotify"
-        elif "instagram" in query_text:
-            params["filter.external.exists"] = "instagram"
-        elif "youtube" in query_text:
-            params["filter.external.exists"] = "youtube"
-            
-        # Exclude certain types if specified
-        exclude_terms = []
-        if "not indie" in query_text:
-            exclude_terms.append("urn:tag:genre:music:indie")
-        if "not mainstream" in query_text:
-            exclude_terms.append("urn:tag:genre:music:mainstream")
-        if exclude_terms:
-            params["filter.exclude.tags"] = ",".join(exclude_terms)
-            
-    # BRAND ENTITY
-    elif any(word in query_text for word in ["brand", "company", "retail", "chain", "franchise", "corporation", "business"]):
-        entity_type = "urn:entity:brand"
-        params["filter.type"] = entity_type
-        
-        # =============================================================================
-        # COMPREHENSIVE BRAND PARAMETERS
-        # =============================================================================
-        
-        # Trends bias
-        if "trending" in query_text or "hot" in query_text or "growing" in query_text:
-            params["bias.trends"] = "high"
-        elif "established" in query_text or "traditional" in query_text:
-            params["bias.trends"] = "low"
-            
-        # Popularity filters
-        if "popular" in query_text or "well-known" in query_text or "major" in query_text:
-            params["filter.popularity.min"] = "0.7"
-        elif "niche" in query_text or "boutique" in query_text or "small" in query_text:
-            params["filter.popularity.max"] = "0.4"
-        elif "emerging" in query_text or "startup" in query_text:
-            params["filter.popularity.max"] = "0.5"
-            
-        # Brand category tags
-        brand_tags = []
-        if "fashion" in query_text or "clothing" in query_text:
-            brand_tags.append("urn:tag:category:brand:fashion")
-        if "technology" in query_text or "tech" in query_text:
-            brand_tags.append("urn:tag:category:brand:technology")
-        if "food" in query_text or "restaurant" in query_text:
-            brand_tags.append("urn:tag:category:brand:food")
-        if "retail" in query_text or "shopping" in query_text:
-            brand_tags.append("urn:tag:category:brand:retail")
-        if "automotive" in query_text or "car" in query_text:
-            brand_tags.append("urn:tag:category:brand:automotive")
-        if "luxury" in query_text or "premium" in query_text:
-            brand_tags.append("urn:tag:category:brand:luxury")
-        if "budget" in query_text or "affordable" in query_text:
-            brand_tags.append("urn:tag:category:brand:budget")
-        if "sustainable" in query_text or "eco" in query_text or "green" in query_text:
-            brand_tags.append("urn:tag:category:brand:sustainable")
-            
-        if brand_tags:
-            params["filter.tags"] = ",".join(brand_tags)
-            
-        # External platform filters
-        if "website" in query_text:
-            params["filter.external.exists"] = "website"
-        elif "social media" in query_text:
-            params["filter.external.exists"] = "instagram,twitter,facebook"
-            
-        # Parent types (if looking for subsidiary brands)
-        if "subsidiary" in query_text or "owned by" in query_text:
-            params["filter.parents.types"] = "urn:entity:brand"
-            
-        # Exclude certain brand types
-        exclude_terms = []
-        if "not luxury" in query_text:
-            exclude_terms.append("urn:tag:category:brand:luxury")
-        if "not budget" in query_text:
-            exclude_terms.append("urn:tag:category:brand:budget")
-        if exclude_terms:
-            params["filter.exclude.tags"] = ",".join(exclude_terms)
-            params["operator.exclude.tags"] = "union"
-        entity_type = "urn:entity:book"
-        params["filter.type"] = entity_type
-        
-        # Book-specific parameters
-        year_match = re.search(r'(19|20)\d{2}', query_text)
-        if year_match:
-            year = year_match.group()
-            params["filter.publication_year.min"] = year
-            
-        if "recent" in query_text or "new" in query_text:
-            params["filter.publication_year.min"] = "2020"
-            
-    # MOVIE ENTITY
-    elif any(word in query_text for word in ["movie", "film", "cinema", "blockbuster", "flick"]):
-        entity_type = "urn:entity:movie"
-        params["filter.type"] = entity_type
-        
-        # =============================================================================
-        # COMPREHENSIVE MOVIE PARAMETERS
-        # =============================================================================
-        
-        # Release year filters
-        year_match = re.search(r'(19|20)\d{2}', query_text)
-        if year_match:
-            year = year_match.group()
-            params["filter.release_year.min"] = year
-            
-        if "recent" in query_text or "new" in query_text:
-            params["filter.release_year.min"] = "2020"
-        elif "classic" in query_text:
-            params["filter.release_year.max"] = "1990"
-        elif "80s" in query_text:
-            params["filter.release_year.min"] = "1980"
-            params["filter.release_year.max"] = "1989"
-        elif "90s" in query_text:
-            params["filter.release_year.min"] = "1990"
-            params["filter.release_year.max"] = "1999"
-            
-        # Content rating filters
-        if "family" in query_text or "kids" in query_text:
-            params["filter.content_rating"] = "G,PG"
-        elif "teen" in query_text:
-            params["filter.content_rating"] = "PG-13"
-        elif "mature" in query_text or "adult" in query_text:
-            params["filter.content_rating"] = "R"
-            
-        # Rating filters (Qloo internal rating)
-        if "highly rated" in query_text or "top rated" in query_text:
-            params["filter.rating.min"] = "4.0"
-        elif "good" in query_text:
-            params["filter.rating.min"] = "3.5"
-            
-        # Popularity filters
-        if "blockbuster" in query_text or "popular" in query_text:
-            params["filter.popularity.min"] = "0.7"
-        elif "indie" in query_text or "independent" in query_text:
-            params["filter.popularity.max"] = "0.5"
-            
-        # Trends bias
-        if "trending" in query_text or "viral" in query_text:
-            params["bias.trends"] = "high"
-            
-        # Release country filters
-        if "hollywood" in query_text or "american" in query_text:
-            params["filter.release_country"] = "United States"
-        elif "bollywood" in query_text or "indian" in query_text:
-            params["filter.release_country"] = "India"
-        elif "british" in query_text or "uk" in query_text:
-            params["filter.release_country"] = "United Kingdom"
-        elif "french" in query_text:
-            params["filter.release_country"] = "France"
-        elif "japanese" in query_text:
-            params["filter.release_country"] = "Japan"
-            
-        # Genre tags
-        movie_tags = []
-        if "action" in query_text:
-            movie_tags.append("urn:tag:genre:media:action")
-        if "comedy" in query_text:
-            movie_tags.append("urn:tag:genre:media:comedy")
-        if "drama" in query_text:
-            movie_tags.append("urn:tag:genre:media:drama")
-        if "horror" in query_text:
-            movie_tags.append("urn:tag:genre:media:horror")
-        if "romance" in query_text or "romantic" in query_text:
-            movie_tags.append("urn:tag:genre:media:romance")
-        if "thriller" in query_text:
-            movie_tags.append("urn:tag:genre:media:thriller")
-        if "sci-fi" in query_text or "science fiction" in query_text:
-            movie_tags.append("urn:tag:genre:media:science_fiction")
-        if "fantasy" in query_text:
-            movie_tags.append("urn:tag:genre:media:fantasy")
-        if "documentary" in query_text:
-            movie_tags.append("urn:tag:genre:media:documentary")
-        if "animation" in query_text or "animated" in query_text:
-            movie_tags.append("urn:tag:genre:media:animation")
-            
-        if movie_tags:
-            params["filter.tags"] = ",".join(movie_tags)
-            
-        # External platform filters
-        if "imdb" in query_text:
-            params["filter.external.exists"] = "imdb"
-        elif "rotten tomatoes" in query_text:
-            params["filter.external.exists"] = "rottentomatoes"
-        elif "metacritic" in query_text:
-            params["filter.external.exists"] = "metacritic"
-            
-    # PERSON ENTITY
-    elif any(word in query_text for word in ["person", "celebrity", "actor", "actress", "director", "politician", "athlete", "public figure"]):
+    if any(word in query_text for word in ["director", "actor", "actress", "celebrity", "person", "politician", "athlete", "author", "writer", "musician", "singer"]):
         entity_type = "urn:entity:person"
         params["filter.type"] = entity_type
         
-        # =============================================================================
-        # COMPREHENSIVE PERSON PARAMETERS
-        # =============================================================================
-        
-        # Gender filter
-        if "male" in query_text or "men" in query_text:
-            params["filter.gender"] = "male"
-        elif "female" in query_text or "women" in query_text:
+        # Gender filter (Fixed logic)
+        if any(word in query_text for word in ["female", "women", "woman", "actress"]):
             params["filter.gender"] = "female"
+        elif any(word in query_text for word in ["male", "men", "man", "actor"]):
+            params["filter.gender"] = "male"
             
-        # Birth/Death year filters
-        if "born in" in query_text:
-            year_match = re.search(r'born in\s+(19|20)\d{2}', query_text)
+        # Birth year filters
+        if "born after" in query_text:
+            year_match = re.search(r'born after\s+(\d{4})', query_text)
             if year_match:
-                year = year_match.group(1) + year_match.group(2)
+                year = year_match.group(1)
+                params["filter.date_of_birth.min"] = f"{year}-01-01"
+        elif "born before" in query_text:
+            year_match = re.search(r'born before\s+(\d{4})', query_text)
+            if year_match:
+                year = year_match.group(1)
+                params["filter.date_of_birth.max"] = f"{year}-12-31"
+        elif "born in" in query_text:
+            year_match = re.search(r'born in\s+(\d{4})', query_text)
+            if year_match:
+                year = year_match.group(1)
                 params["filter.date_of_birth.min"] = f"{year}-01-01"
                 params["filter.date_of_birth.max"] = f"{year}-12-31"
                 
+        # Age-based filters (alternative approach)
         if "young" in query_text or "under 30" in query_text:
             params["filter.date_of_birth.min"] = "1990-01-01"
-        elif "veteran" in query_text or "experienced" in query_text:
+        elif "veteran" in query_text or "experienced" in query_text or "older" in query_text:
             params["filter.date_of_birth.max"] = "1970-01-01"
             
         # Popularity filters
-        if "famous" in query_text or "well-known" in query_text:
+        if any(word in query_text for word in ["famous", "well-known", "popular", "renowned"]):
             params["filter.popularity.min"] = "0.7"
-        elif "emerging" in query_text or "up-and-coming" in query_text:
+        elif any(word in query_text for word in ["emerging", "up-and-coming", "unknown"]):
             params["filter.popularity.max"] = "0.5"
             
         # Trends bias
-        if "trending" in query_text or "viral" in query_text:
+        if any(word in query_text for word in ["trending", "viral", "hot", "current"]):
             params["bias.trends"] = "high"
             
-        # Person category tags
+        # Profession tags (using supported format)
         person_tags = []
-        if "actor" in query_text or "actress" in query_text:
-            person_tags.append("urn:tag:profession:actor")
         if "director" in query_text:
             person_tags.append("urn:tag:profession:director")
-        if "musician" in query_text or "singer" in query_text:
+        if any(word in query_text for word in ["actor", "actress"]):
+            person_tags.append("urn:tag:profession:actor")
+        if any(word in query_text for word in ["musician", "singer"]):
             person_tags.append("urn:tag:profession:musician")
         if "politician" in query_text:
             person_tags.append("urn:tag:profession:politician")
-        if "athlete" in query_text or "sports" in query_text:
+        if any(word in query_text for word in ["athlete", "sports"]):
             person_tags.append("urn:tag:profession:athlete")
-        if "author" in query_text or "writer" in query_text:
+        if any(word in query_text for word in ["author", "writer"]):
             person_tags.append("urn:tag:profession:author")
             
         if person_tags:
@@ -500,109 +263,93 @@ def _determine_entity_and_comprehensive_params(query_text: str) -> Tuple[str, Di
             params["filter.external.exists"] = "twitter"
         elif "imdb" in query_text:
             params["filter.external.exists"] = "imdb"
-        entity_type = "urn:entity:destination"
-        params["filter.type"] = entity_type
-        
-        # Geographic filters
-        if "usa" in query_text or "america" in query_text:
-            params["filter.geocode.country_code"] = "US"
-        elif "uk" in query_text or "britain" in query_text:
-            params["filter.geocode.country_code"] = "GB"
-        elif "japan" in query_text:
-            params["filter.geocode.country_code"] = "JP"
-        elif "india" in query_text:
-            params["filter.geocode.country_code"] = "IN"
             
+    # =============================================================================
     # MOVIE ENTITY
-    elif any(word in query_text for word in ["movie", "film", "cinema", "blockbuster"]):
+    # =============================================================================
+    elif any(word in query_text for word in ["movie", "film", "cinema", "blockbuster", "flick"]):
         entity_type = "urn:entity:movie"
         params["filter.type"] = entity_type
         
-        # Movie-specific parameters
-        if "recent" in query_text or "new" in query_text:
-            params["filter.release_year.min"] = "2020"
-        if "classic" in query_text:
-            params["filter.release_year.max"] = "1990"
-            
-        # Content rating
-        if "family" in query_text or "kids" in query_text:
-            params["filter.content_rating"] = "G,PG"
-        elif "mature" in query_text:
-            params["filter.content_rating"] = "R"
-            
-        # Genre tags
-        genre_tags = []
-        if "action" in query_text:
-            genre_tags.append("urn:tag:genre:media:action")
-        if "comedy" in query_text:
-            genre_tags.append("urn:tag:genre:media:comedy")
-        if "drama" in query_text:
-            genre_tags.append("urn:tag:genre:media:drama")
-        if "horror" in query_text:
-            genre_tags.append("urn:tag:genre:media:horror")
-        if "romance" in query_text or "romantic" in query_text:
-            genre_tags.append("urn:tag:genre:media:romance")
-            
-        if genre_tags:
-            params["filter.tags"] = ",".join(genre_tags)
-            
-    # TV SHOW ENTITY
-    elif any(word in query_text for word in ["tv", "show", "series", "television", "netflix", "streaming", "episode"]):
-        entity_type = "urn:entity:tv_show"
-        params["filter.type"] = entity_type
-        
-        # =============================================================================
-        # COMPREHENSIVE TV SHOW PARAMETERS
-        # =============================================================================
-        
         # Release year filters
-        if "recent" in query_text or "new" in query_text:
+        year_match = re.search(r'(19|20)\d{2}', query_text)
+        if year_match:
+            year = year_match.group()
+            params["filter.release_year.min"] = year
+            
+        if any(word in query_text for word in ["recent", "new", "latest"]):
             params["filter.release_year.min"] = "2020"
         elif "classic" in query_text:
-            params["filter.release_year.max"] = "2000"
+            params["filter.release_year.max"] = "1990"
             
-        # Finale year filters
-        if "ended" in query_text or "finished" in query_text:
-            params["filter.finale_year.max"] = "2023"
-        elif "ongoing" in query_text or "current" in query_text:
-            # Shows that haven't ended yet
-            params["filter.finale_year.min"] = "2024"
-            
-        # Latest known year (for shows with updates)
-        if "updated recently" in query_text:
-            params["filter.latest_known_year.min"] = "2022"
-            
-        # Content rating
-        if "family" in query_text or "kids" in query_text:
-            params["filter.content_rating"] = "TV-G,TV-PG"
-        elif "mature" in query_text:
-            params["filter.content_rating"] = "TV-MA"
+        # Content rating filters
+        if any(word in query_text for word in ["family", "kids", "children"]):
+            params["filter.content_rating"] = "G,PG"
+        elif any(word in query_text for word in ["teen", "teenager"]):
+            params["filter.content_rating"] = "PG-13"
+        elif any(word in query_text for word in ["mature", "adult"]):
+            params["filter.content_rating"] = "R"
             
         # Rating filters
-        if "highly rated" in query_text:
+        if any(word in query_text for word in ["highly rated", "top rated", "best"]):
             params["filter.rating.min"] = "4.0"
         elif "good" in query_text:
             params["filter.rating.min"] = "3.5"
             
         # Popularity filters
-        if "popular" in query_text or "hit" in query_text:
+        if any(word in query_text for word in ["blockbuster", "popular", "hit"]):
             params["filter.popularity.min"] = "0.7"
-        elif "cult" in query_text or "niche" in query_text:
+        elif any(word in query_text for word in ["indie", "independent"]):
             params["filter.popularity.max"] = "0.5"
             
         # Trends bias
-        if "trending" in query_text or "viral" in query_text:
+        if any(word in query_text for word in ["trending", "viral", "hot"]):
             params["bias.trends"] = "high"
             
-        # Release country
-        if "american" in query_text or "us" in query_text:
-            params["filter.release_country"] = "United States"
-        elif "british" in query_text or "uk" in query_text:
-            params["filter.release_country"] = "United Kingdom"
-        elif "korean" in query_text or "k-drama" in query_text:
-            params["filter.release_country"] = "South Korea"
-        elif "japanese" in query_text or "anime" in query_text:
-            params["filter.release_country"] = "Japan"
+        # Genre tags
+        movie_tags = []
+        if "action" in query_text:
+            movie_tags.append("urn:tag:genre:media:action")
+        if "comedy" in query_text:
+            movie_tags.append("urn:tag:genre:media:comedy")
+        if "drama" in query_text:
+            movie_tags.append("urn:tag:genre:media:drama")
+        if "horror" in query_text:
+            movie_tags.append("urn:tag:genre:media:horror")
+        if any(word in query_text for word in ["romance", "romantic"]):
+            movie_tags.append("urn:tag:genre:media:romance")
+        if "thriller" in query_text:
+            movie_tags.append("urn:tag:genre:media:thriller")
+        if any(word in query_text for word in ["sci-fi", "science fiction"]):
+            movie_tags.append("urn:tag:genre:media:science_fiction")
+        if "fantasy" in query_text:
+            movie_tags.append("urn:tag:genre:media:fantasy")
+        if "documentary" in query_text:
+            movie_tags.append("urn:tag:genre:media:documentary")
+        if any(word in query_text for word in ["animation", "animated"]):
+            movie_tags.append("urn:tag:genre:media:animation")
+            
+        if movie_tags:
+            params["filter.tags"] = ",".join(movie_tags)
+            
+    # =============================================================================
+    # TV SHOW ENTITY
+    # =============================================================================
+    elif any(word in query_text for word in ["tv", "show", "series", "television", "netflix", "streaming", "episode"]):
+        entity_type = "urn:entity:tv_show"
+        params["filter.type"] = entity_type
+        
+        # Release year filters
+        if any(word in query_text for word in ["recent", "new", "latest"]):
+            params["filter.release_year.min"] = "2020"
+        elif "classic" in query_text:
+            params["filter.release_year.max"] = "2000"
+            
+        # Content rating
+        if any(word in query_text for word in ["family", "kids"]):
+            params["filter.content_rating"] = "TV-G,TV-PG"
+        elif "mature" in query_text:
+            params["filter.content_rating"] = "TV-MA"
             
         # Genre tags
         tv_tags = []
@@ -616,7 +363,7 @@ def _determine_entity_and_comprehensive_params(query_text: str) -> Tuple[str, Di
             tv_tags.append("urn:tag:genre:media:documentary")
         if "crime" in query_text:
             tv_tags.append("urn:tag:genre:media:crime")
-        if "sci-fi" in query_text:
+        if any(word in query_text for word in ["sci-fi", "science fiction"]):
             tv_tags.append("urn:tag:genre:media:science_fiction")
         if "fantasy" in query_text:
             tv_tags.append("urn:tag:genre:media:fantasy")
@@ -625,162 +372,171 @@ def _determine_entity_and_comprehensive_params(query_text: str) -> Tuple[str, Di
             
         if tv_tags:
             params["filter.tags"] = ",".join(tv_tags)
-        entity_type = "urn:entity:person"
-        params["filter.type"] = entity_type
-        
-        # Gender filter
-        if "male" in query_text:
-            params["filter.gender"] = "male"
-        elif "female" in query_text:
-            params["filter.gender"] = "female"
             
-    # PODCAST ENTITY
-    elif any(word in query_text for word in ["podcast", "audio", "episode", "series"]):
-        entity_type = "urn:entity:podcast"
+    # =============================================================================
+    # BOOK ENTITY
+    # =============================================================================
+    elif any(word in query_text for word in ["book", "novel", "publication", "literature"]):
+        entity_type = "urn:entity:book"
         params["filter.type"] = entity_type
         
-    # TV SHOW ENTITY
-    elif any(word in query_text for word in ["tv", "show", "series", "television", "netflix", "streaming"]):
-        entity_type = "urn:entity:tv_show"
-        params["filter.type"] = entity_type
-        
-        # TV-specific parameters
-        if "recent" in query_text or "new" in query_text:
-            params["filter.release_year.min"] = "2020"
-        if "ended" in query_text or "finished" in query_text:
-            params["filter.finale_year.max"] = "2023"
+        # Publication year filters
+        year_match = re.search(r'(19|20)\d{2}', query_text)
+        if year_match:
+            year = year_match.group()
+            params["filter.publication_year.min"] = year
             
-    # VIDEO GAME ENTITY
-    elif any(word in query_text for word in ["game", "video game", "gaming", "console", "pc game"]):
-        entity_type = "urn:entity:video_game"
-        params["filter.type"] = entity_type
-        
-    # PLACE ENTITY (DEFAULT) - WITH COMPREHENSIVE PARAMETERS
+        if any(word in query_text for word in ["recent", "new"]):
+            params["filter.publication_year.min"] = "2020"
+            
+    # =============================================================================
+    # PLACE ENTITY (DEFAULT) - Simplified and fixed
+    # =============================================================================
     else:
         entity_type = "urn:entity:place"
         params["filter.type"] = entity_type
         
-        # =============================================================================
-        # COMPREHENSIVE PLACE PARAMETERS EXTRACTION
-        # =============================================================================
-        
-        # VENUE TYPE TAGS
+        # Basic place tags
         place_tags = []
         
-        # Restaurant/food queries
-        if any(word in query_text for word in ["restaurant", "food", "dining", "eat", "meal", "cuisine"]):
+        if any(word in query_text for word in ["restaurant", "food", "dining", "eat"]):
             place_tags.append("urn:tag:genre:place:restaurant")
-            
-            # Cuisine-specific tags
-            cuisine_map = {
-                "japanese": "urn:tag:cuisine:japanese",
-                "italian": "urn:tag:cuisine:italian", 
-                "chinese": "urn:tag:cuisine:chinese",
-                "indian": "urn:tag:cuisine:indian",
-                "mexican": "urn:tag:cuisine:mexican",
-                "thai": "urn:tag:cuisine:thai",
-                "french": "urn:tag:cuisine:french",
-                "korean": "urn:tag:cuisine:korean",
-                "american": "urn:tag:cuisine:american",
-                "mediterranean": "urn:tag:cuisine:mediterranean"
-            }
-            
-            for cuisine, tag in cuisine_map.items():
-                if cuisine in query_text:
-                    place_tags.append(tag)
-                    
-        # Bar/nightlife queries
-        elif any(word in query_text for word in ["bar", "pub", "nightlife", "drinks", "cocktail", "beer"]):
+        elif any(word in query_text for word in ["bar", "pub", "nightlife", "drinks"]):
             place_tags.append("urn:tag:genre:place:bar")
-            
-        # Hotel queries
-        elif any(word in query_text for word in ["hotel", "accommodation", "stay", "lodge", "resort"]):
+        elif any(word in query_text for word in ["hotel", "accommodation", "stay"]):
             place_tags.append("urn:tag:genre:place:hotel")
-            
-            # Hotel class filters
-            if "luxury" in query_text or "5 star" in query_text:
-                params["filter.hotel_class.min"] = "4"
-            elif "budget" in query_text or "cheap" in query_text:
-                params["filter.hotel_class.max"] = "2"
-                
-        # Entertainment venues
-        elif any(word in query_text for word in ["museum", "theater", "cinema", "entertainment", "gallery"]):
-            if "museum" in query_text:
-                place_tags.append("urn:tag:genre:place:museum")
-            elif "theater" in query_text or "cinema" in query_text:
-                place_tags.append("urn:tag:genre:place:entertainment")
-                
-        # Shopping
-        elif any(word in query_text for word in ["shopping", "mall", "store", "boutique", "market"]):
+        elif any(word in query_text for word in ["museum", "theater", "entertainment"]):
+            place_tags.append("urn:tag:genre:place:entertainment")
+        elif any(word in query_text for word in ["shopping", "mall", "store"]):
             place_tags.append("urn:tag:genre:place:shopping")
-            
-        # Parks/outdoor
-        elif any(word in query_text for word in ["park", "outdoor", "nature", "garden", "beach"]):
+        elif any(word in query_text for word in ["park", "outdoor", "nature"]):
             place_tags.append("urn:tag:genre:place:park")
             
         if place_tags:
             params["filter.tags"] = ",".join(place_tags)
             
-        # PRICE LEVEL EXTRACTION
-        if any(word in query_text for word in ["expensive", "luxury", "high-end", "premium"]):
-            params["filter.price_level.min"] = "3"
-        elif any(word in query_text for word in ["cheap", "budget", "affordable", "inexpensive"]):
-            params["filter.price_level.max"] = "2"
-        elif "mid-range" in query_text or "moderate" in query_text:
-            params["filter.price_level.min"] = "2"
-            params["filter.price_level.max"] = "3"
-            
-        # RATING FILTERS
-        if "highly rated" in query_text or "top rated" in query_text:
-            params["filter.properties.business_rating.min"] = "4.0"
-        elif "good rating" in query_text:
-            params["filter.properties.business_rating.min"] = "3.5"
-            
-        # POPULARITY FILTERS
-        if "popular" in query_text or "trending" in query_text:
+        # Basic popularity filter
+        if any(word in query_text for word in ["popular", "trending"]):
             params["filter.popularity.min"] = "0.7"
-        elif "hidden gem" in query_text or "local" in query_text:
-            params["filter.popularity.max"] = "0.5"
-            
-        # HOURS FILTER
-        days_map = {
-            "monday": "Monday", "tuesday": "Tuesday", "wednesday": "Wednesday",
-            "thursday": "Thursday", "friday": "Friday", "saturday": "Saturday", "sunday": "Sunday"
-        }
-        for day_text, day_param in days_map.items():
-            if day_text in query_text:
-                params["filter.hours"] = day_param
-                break
-                
-        # ADDRESS FILTER
-        address_match = re.search(r'near\s+([A-Za-z\s,]+?)(?:\s|$)', query_text)
-        if address_match:
-            params["filter.address"] = address_match.group(1).strip()
-            
-        # BRAND REFERENCE
-        brand_keywords = ["starbucks", "mcdonalds", "hilton", "marriott", "walmart", "target"]
-        for brand in brand_keywords:
-            if brand in query_text.lower():
-                # In real implementation, would need brand entity ID resolution
-                params["filter.references_brand"] = f"urn:entity:brand:{brand}"
-                break
-                
-        # EXTERNAL INTEGRATIONS
-        if "tripadvisor" in query_text:
-            params["filter.external.exists"] = "tripadvisor"
-            if "highly rated" in query_text:
-                params["filter.external.tripadvisor.rating.min"] = "4.0"
-                
-        if "resy" in query_text or "reservation" in query_text:
-            params["filter.external.exists"] = "resy"
-            
-        # PARTY SIZE (for restaurants)
-        party_match = re.search(r'(\d+)\s*(people|person|party)', query_text)
-        if party_match:
-            party_size = party_match.group(1)
-            params["filter.external.resy.party_size.min"] = party_size
-            
+    
     return entity_type, params
+
+
+def validate_parameters_for_entity(entity_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate and filter parameters based on entity type support"""
+    
+    # Define supported parameters for each entity type based on the documentation
+    supported_params = {
+        "urn:entity:artist": {
+            "filter.type", "bias.trends", "filter.exclude.entities", "filter.external.exists",
+            "filter.parents.types", "filter.popularity.min", "filter.popularity.max", "filter.exclude.tags",
+            "operator.exclude.tags", "filter.external.exists", "operator.filter.external.exists",
+            "filter.results.entities", "filter.results.entities.query", "filter.tags", "operator.filter.tags",
+            "offset", "signal.demographics.age", "signal.demographics.audiences", 
+            "signal.demographics.audiences.weight", "signal.demographics.gender", "signal.interests.entities",
+            "signal.interests.tags", "take"
+        },
+        "urn:entity:book": {
+            "filter.type", "bias.trends", "filter.exclude.entities", "filter.exclude.tags",
+            "operator.exclude.tags", "filter.external.exists", "operator.filter.external.exists",
+            "filter.parents.types", "filter.popularity.min", "filter.popularity.max",
+            "filter.publication_year.min", "filter.publication_year.max", "filter.results.entities",
+            "filter.results.entities.query", "filter.tags", "operator.filter.tags", "offset",
+            "signal.demographics.audiences", "signal.demographics.age", "signal.demographics.audiences.weight",
+            "signal.demographics.gender", "signal.interests.entities", "signal.interests.tags", "take"
+        },
+        "urn:entity:brand": {
+            "filter.type", "bias.trends", "filter.exclude.entities", "filter.exclude.tags",
+            "operator.exclude.tags", "filter.external.exists", "operator.filter.external.exists",
+            "filter.parents.types", "filter.popularity.min", "filter.popularity.max",
+            "filter.results.entities", "filter.results.entities.query", "filter.tags", "operator.filter.tags", 
+            "offset", "signal.demographics.audiences", "signal.demographics.age", "signal.demographics.audiences.weight",
+            "signal.demographics.gender", "signal.interests.entities", "signal.interests.tags", "take"
+        },
+        "urn:entity:destination": {
+            "filter.type", "bias.trends", "filter.exclude.entities", "filter.exclude.tags", 
+            "operator.exclude.tags", "filter.external.exists", "operator.filter.external.exists",
+            "filter.geocode.name", "filter.geocode.admin1_region", "filter.geocode.admin2_region", "filter.geocode.country_code", 
+            "filter.location", "filter.location.geohash", "filter.exclude.location.geohash", "filter.location.radius",
+            "filter.parents.types", "filter.popularity.min", "filter.popularity.max",
+            "filter.results.entities", "filter.results.entities.query", "filter.tags", "operator.filter.tags",
+            "offset", "signal.demographics.age", "signal.demographics.audiences",
+            "signal.demographics.audiences.weight",
+            "signal.demographics.gender", "signal.interests.entities", "signal.interests.tags", "take"
+        },
+        "urn:entity:movie": {
+            "filter.type", "bias.trends", "filter.content_rating", "filter.exclude.entities",
+            "filter.external.exists", "operator.filter.external.exists", "filter.exclude.tags",
+            "operator.exclude.tags", "filter.parents.types", "filter.popularity.min", "filter.popularity.max",
+            "filter.release_year.min", "filter.release_year.max", "filter.release_country",
+            "operator.filter.release_country", "filter.rating.min", "filter.rating.max",
+            "filter.results.entities", "filter.results.entities.query", "filter.tags", "operator.filter.tags",
+            "offset", "signal.demographics.audiences", "signal.demographics.age", 
+            "signal.demographics.audiences.weight", "signal.demographics.gender", "signal.interests.entities",
+            "signal.interests.tags", "take"
+        },
+        "urn:entity:person": {
+            "filter.type", "bias.trends", "filter.exclude.entities", "filter.external.exists",
+            "operator.filter.external.exists", "filter.exclude.tags", "operator.exclude.tags",
+            "filter.gender", "filter.parents.types", "filter.popularity.max", "filter.popularity.min",
+            "filter.results.entities", "filter.results.entities.query", "filter.tags", "operator.filter.tags",
+            "offset", "signal.demographics.age", "signal.demographics.audiences", 
+            "signal.demographics.audiences.weight", "signal.demographics.gender", "signal.interests.entities",
+            "signal.interests.tags", "take", "filter.date_of_birth.min", "filter.date_of_birth.max",
+            "filter.date_of_death.min", "filter.date_of_death.max"
+        },
+        "urn:entity:place": {
+            "filter.type", "bias.trends", "filter.address", "filter.exclude.entities", "filter.exclude.tags", 
+            "operator.exclude.tags", "filter.external.exists", "operator.filter.external.exists", "filter.external.tripadvisor.rating.count.max",
+            "filter.external.tripadvisor.rating.count.min", "filter.external.tripadvisor.rating.max", "filter.external.tripadvisor.rating.min",
+            "filter.geocode.name", "filter.geocode.admin1_region", "filter.geocode.admin2_region", "filter.geocode.country_code", "filter.hotel_class.max",
+            "filter.hotel_class.min", "filter.hours", "filter.location", "filter.location.geohash", "filter.exclude.location.geohash", "filter.location.radius",
+            "filter.parents.types", "filter.popularity.min", "filter.popularity.max", "filter.price_level.max", "filter.price_level.min",
+            "filter.price_range.from", "filter.price_range.to", "filter.properties.business_rating.min", "filter.properties.business_rating.max", "filter.properties.resy.rating.min",
+            "filter.properties.resy.rating.max", "filter.references_brand", "filter.results.entities", "filter.results.entities.query", "filter.resy.rating_count.min", "filter.resy.rating_count.max",
+            "filter.resy.rating.party.min", "filter.resy.rating.party.max", "filter.tags", "operator.filter.tags", "offset", "signal.demographics.age", "signal.demographics.audiences", "signal.demographics.audiences.weight",
+            "signal.demographics.gender", "signal.interests.entities", "signal.interests.tags", "take"
+        },
+        "urn:entity:podcast": {
+            "filter.type", "bias.trends", "filter.exclude.entities", "filter.exclude.tags",
+            "operator.exclude.tags", "filter.external.exists", "operator.filter.external.exists",
+            "filter.parents.types", "filter.popularity.min", "filter.popularity.max",
+            "filter.results.entities", "filter.results.entities.query", "filter.tags", "operator.filter.tags", 
+            "offset", "signal.demographics.audiences", "signal.demographics.age", "signal.demographics.audiences.weight",
+            "signal.demographics.gender", "signal.interests.entities", "signal.interests.tags", "take"
+        },
+        "urn:entity:tv_show": {
+            "filter.type", "bias.trends", "filter.content_rating", "filter.exclude.entities",
+            "filter.external.exists", "operator.filter.external.exists", "filter.exclude.tags",
+            "operator.exclude.tags", "filter.finale_year.max", "filter.finale_year.min",
+            "filter.latest_known_year.max", "filter.latest_known_year.min", "filter.parents.types",
+            "filter.popularity.max", "filter.popularity.min", "filter.release_year.max",
+            "filter.release_year.min", "filter.release_country", "operator.filter.release_country",
+            "filter.rating.max", "filter.rating.min", "filter.results.entities",
+            "filter.results.entities.query", "filter.tags", "operator.filter.tags", "offset",
+            "signal.demographics.age", "signal.demographics.audiences", "signal.demographics.audiences.weight",
+            "signal.demographics.gender", "signal.interests.entities", "signal.interests.tags", "take"
+        },
+        "urn:entity:video_game": {
+            "filter.type", "bias.trends", "filter.exclude.entities", "filter.exclude.tags",
+            "operator.exclude.tags", "filter.external.exists", "operator.filter.external.exists",
+            "filter.parents.types", "filter.popularity.min", "filter.popularity.max",
+            "filter.results.entities", "filter.results.entities.query", "filter.tags", "operator.filter.tags", 
+            "offset", "signal.demographics.audiences", "signal.demographics.age", "signal.demographics.audiences.weight",
+            "signal.demographics.gender", "signal.interests.entities", "signal.interests.tags", "take"
+        }
+        
+    }
+    
+    # Get supported parameters for this entity type
+    if entity_type in supported_params:
+        allowed_params = supported_params[entity_type]
+        # Filter out unsupported parameters
+        filtered_params = {k: v for k, v in params.items() if k in allowed_params}
+        return filtered_params
+    
+    # If entity type not recognized, return original params
+    return params
 
 def _get_demographic_signals(social_context: str) -> Dict[str, str]:
     """Get demographic signals based on social context"""
