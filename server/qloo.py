@@ -236,9 +236,9 @@ async def analyze_cultural_hotspots(city: str, cultural_interests: str = "artisa
         "filter.type": "urn:heatmap",
         "filter.location.query": city,
         "signal.interests.tags": ",".join(all_tags[:5]),  # Limit to 5 most relevant tags
-        "signal.demographics.age": "25_to_34",
+        "signal.demographics.age": "25_to_29",
         "output.heatmap.boundary": "neighborhood",
-        "bias.trends": "true",
+        "bias.trends": "low",
         "take": "20"
     }
     
@@ -385,8 +385,8 @@ async def analyze_neighborhood_culture(neighborhood: str, category: str = "resta
             "filter.type": "urn:entity:place",
             "filter.tags": f"urn:tag:genre:place:{cat}",
             "signal.location.query": neighborhood,
-            "signal.demographics.age": "25_to_34",
-            "bias.trends": "true",
+            "signal.demographics.age": "25_to_29",
+            "bias.trends": "low",
             "feature.explainability": "true",
             "take": "10"
         }
@@ -427,6 +427,3 @@ async def analyze_neighborhood_culture(neighborhood: str, category: str = "resta
                 result += "\n"
     
     return result
-
-if __name__ == "__main__":
-    mcp.run()

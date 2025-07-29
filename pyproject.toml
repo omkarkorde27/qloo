@@ -1,16 +1,13 @@
 [project]
 name = "qloohackathon"
 version = "0.1.0"
-description = "CultureShift AI - Real Estate Investment Intelligence Platform"
+description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "asyncio>=3.4.3",
-    "langchain-anthropic>=0.3.0", 
-    "langchain>=0.3.0",
+    "langchain-groq>=0.3.2",
     "mcp-use>=1.2.7",
     "mcp[cli]>=1.6.0",
     "nest-asyncio>=1.6.0",
-    "python-dotenv>=1.0.0",
-    "httpx>=0.27.0"
 ]

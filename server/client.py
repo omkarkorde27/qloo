@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from langchain_anthropic import ChatAnthropic
+from langchain_groq import ChatGroq
 
 from mcp_use import MCPAgent, MCPClient
 
@@ -11,8 +11,8 @@ async def run_memory_chat():
     load_dotenv()
     
     # Set environment variables
-    os.environ["ANTHROPIC_API_KEY"] = os.getenv("ANTHROPIC_API_KEY")
-    os.environ["QLOO_API_KEY"] = os.getenv("QLOO_API_KEY")
+    os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
+    os.environ["QLOO_API_KEY"] = os.getenv("QLOO_API_KEY")  # Add this line
     
     # Check if API keys are loaded
     if not os.getenv("QLOO_API_KEY"):
@@ -20,23 +20,18 @@ async def run_memory_chat():
         print("Please make sure your .env file contains: QLOO_API_KEY=your_api_key_here")
         return
     
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        print("Warning: ANTHROPIC_API_KEY not found in environment variables")
-        print("Please make sure your .env file contains: ANTHROPIC_API_KEY=your_api_key_here")
+    if not os.getenv("GROQ_API_KEY"):
+        print("Warning: GROQ_API_KEY not found in environment variables")
         return
 
-    # Config file path - using the existing qloo.json
+    # Config file path - updated to use qloo.json
     config_file = "server/qloo.json"
 
-    print("Initializing CultureShift AI with Claude...")
+    print("Initializing chat...")
 
     # Create MCP client and agent with memory enabled
     client = MCPClient.from_config_file(config_file)
-    llm = ChatAnthropic(
-        model="claude-3-5-sonnet-20241022",  # Latest Claude model
-        temperature=0.1,  # Lower temperature for more consistent analysis
-        max_tokens=4000
-    )
+    llm = ChatGroq(model="llama-3.3-70b-versatile")
 
     # Create agent with memory_enabled=True
     agent = MCPAgent(
@@ -46,15 +41,14 @@ async def run_memory_chat():
         memory_enabled=True,  # Enable built-in conversation memory
     )
 
-    print("\n===== CultureShift AI: Real Estate Investment Intelligence =====")
+    print("\n===== Interactive MCP Chat =====")
     print("Type 'exit' or 'quit' to end the conversation")
     print("Type 'clear' to clear conversation history")
-    print("\n🎯 **Available Cultural Intelligence Commands:**")
-    print("- Analyze cultural hotspots: 'Find cultural hotspots in Brooklyn for vegan food, yoga studios'")
-    print("- Demographic analysis: 'What demographics like craft beer, indie music venues?'")
-    print("- Neighborhood profiling: 'Analyze cultural DNA of Williamsburg for restaurants, bars'")
-    print("- Tag discovery: 'Discover available tags for korean food'")
-    print("==================================================================\n")
+    print("Available commands:")
+    print("- Ask for restaurant recommendations: 'Find Japanese restaurants in Mumbai'")
+    print("- Ask for general places: 'Find cafes in Tokyo'")
+    print("- Get weather alerts: 'Get alerts for CA'")
+    print("==================================\n")
 
     try:
         # Main chat loop
@@ -64,7 +58,7 @@ async def run_memory_chat():
 
             # Check for exit command
             if user_input.lower() in ["exit", "quit"]:
-                print("Ending CultureShift AI session...")
+                print("Ending conversation...")
                 break
 
             # Check for clear history command
@@ -74,7 +68,7 @@ async def run_memory_chat():
                 continue
 
             # Get response from agent
-            print("\nCultureShift AI: ", end="", flush=True)
+            print("\nAssistant: ", end="", flush=True)
 
             try:
                 # Run the agent with the user input (memory handling is automatic)
